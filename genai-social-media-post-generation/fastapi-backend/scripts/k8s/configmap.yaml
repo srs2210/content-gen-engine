@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pru-market-gen-config
+  namespace: pru-market-gen-ns
+data:
+  # Ensure these values are correct for your environment
+  PROJECT_ID: "prusandbx-nprd-uat-rt5044"
+  PROJECT_NUMBER: "731889068989"
+  FIRESTORE_ID: "(default)"
+  # Add other non-sensitive env vars from Cloud Run --set-env-vars
+  LOG_LEVEL: "info"
+  # SOME_OTHER_CONFIG: "value"

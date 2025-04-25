@@ -1,0 +1,12 @@
+google-cloud-firestore==2.19.0
+google-cloud-storage==2.18.2
+pydantic==2.9.2
+rembg==2.0.60
+pillow==11.0.0
+numpy==2.0.2
+firebase-functions==0.4.2
+vertexai==1.67.1
+loguru==0.7.2
+onnxruntime==1.20.1
+functions_framework==3.8.2
+cloudevents==1.11.0

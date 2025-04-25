@@ -1,0 +1,153 @@
+"""
+ Copyright 2024 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ """
+
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from middlewares.tracker import TrackerMiddleware
+from middlewares.user_validation import UserValidationMiddleware
+from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse  # Import the RequestConfig and Post models
+from service.firestore import firestore_service
+from utils.types import LoginRequest  # Import the LoginRequest model
+from utils.commons import add_signed_url_to_posts
+from background_scripts.content_generation_pipeline import generate_posts_background
+from service.cloud_storage import cs_service
+from fastapi.responses import Response
+from service.pubsub import pubsub_service
+
+app = FastAPI()
+"""Middleware order is from bottom to top"""
+# user_validation_middleware = UserValidationMiddleware()
+app.add_middleware(TrackerMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(UserValidationMiddleware)
+
+@app.post("/v1/generate-post", response_model=GeneratePostResponse)
+async def generate_post(generate_post_payload: GeneratePostRequest, background_tasks: BackgroundTasks):
+    request_id = await firestore_service.create_request(generate_post_payload.userId, generate_post_payload.requestConfig) 
+    print(f"Starting background generation pipeline for request_id: {request_id}")
+    background_tasks.add_task(
+        generate_posts_background,
+        request_id,
+        generate_post_payload.userId,
+        generate_post_payload.requestConfig.model_dump()
+    )
+    return GeneratePostResponse(requestId=request_id)
+
+@app.post("/v2/generate-post", response_model=GeneratePostResponse)
+async def generate_post(generate_post_payload: GeneratePostRequest):
+    request_id = await firestore_service.create_request(generate_post_payload.userId, generate_post_payload.requestConfig) 
+    print(f"Starting background generation pipeline for request_id: {request_id}")
+    await pubsub_service.publish_message(
+        topic_name="content-generation-v1",
+        message_data={"requestId": request_id, "userId": generate_post_payload.userId, "requestConfig": generate_post_payload.requestConfig.model_dump()}
+    )
+    return GeneratePostResponse(requestId=request_id)
+
+
+
+@app.post("/v2/generated-results", response_model=GeneratedResultsResponse)
+async def generated_results(generated_results_request: GeneratedResultsRequest):
+    request = await firestore_service.get_request(generated_results_request.requestId)
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if request.userId != generated_results_request.userId:
+        raise HTTPException(status_code=403, detail="User does not have access to this request")
+    posts, error_count = await firestore_service.get_posts_by_request_id(generated_results_request.requestId)
+    posts = add_signed_url_to_posts(posts)
+    if request.status == RequestStatus.completed:
+        return GeneratedResultsResponse(requestStatus=request.status, posts=posts)
+    print(f"request: {generated_results_request.requestId}, len(posts): {len(posts)}, request_post_count: {request.requestConfig.postCount}, error_count: {error_count}")
+
+    #update request status to completed if all posts are evaluated
+    request_post_count = request.requestConfig.postCount
+    if len(posts) >= request_post_count - error_count and all(post.evaluationStatus != EvaluationStatus.pending for post in posts):
+        request.status = RequestStatus.completed
+        await firestore_service.update_request(generated_results_request.requestId, request)
+        return GeneratedResultsResponse(requestStatus=request.status, posts=posts)
+    
+    request_status = request.status
+    return GeneratedResultsResponse(requestStatus=request_status, posts=posts)
+
+@app.post("/v1/requests-by-user-id", response_model=AllRequestsResponse)
+async def requests_by_user_id(all_requests_payload: AllRequestsPayload):
+    requests = await firestore_service.get_requests_by_user_id(all_requests_payload.userId)
+    return AllRequestsResponse(requests=requests)
+
+@app.get("/v1/health")
+async def v1_health():
+    return {"health": "ok"}
+
+@app.post("/v1/login", response_model=LoginResponse)
+async def login(login_request: LoginRequest):
+    user = await firestore_service.get_user_by_email_and_pin(login_request.email, login_request.pin)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or pin")
+    return LoginResponse(userId=user.userId, signOff=user.signOff, name=user.name)
+
+@app.post("/v1/update-user-sign-off", response_model=UpdateUserSignOffResponse)
+async def update_user_sign_off(update_user_sign_off_request: UpdateUserSignOffRequest):
+    result = await firestore_service.update_user_sign_off(update_user_sign_off_request.userId, update_user_sign_off_request.signOff, update_user_sign_off_request.isSignOffRemembered)
+    return UpdateUserSignOffResponse(success=result)
+
+@app.post("/v1/update-post-vote", response_model=UpdatePostVoteResponse)
+async def update_post_vote(update_post_vote_request: UpdatePostVoteRequest):
+    result = await firestore_service.update_post_vote(update_post_vote_request.postId, update_post_vote_request.vote)
+    return UpdatePostVoteResponse(success=result)
+
+@app.post("/v1/download-image")
+async def download_image(download_image_request: DownloadImageRequest):
+    # Verify user has access to the post
+    post = await firestore_service.get_post(download_image_request.postId)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.userId != download_image_request.userId:
+        raise HTTPException(status_code=403, detail="User does not have access to this post")
+    
+    # Extract bucket and file path from the gs:// URL
+    gs_url = post.finalImageUrl
+    if not gs_url.startswith("gs://"):
+        raise ValueError("Invalid gs:// URL")
+    
+    path_parts = gs_url[5:].split("/", 1)  # Remove 'gs://' and split
+    bucket_name = path_parts[0]
+    blob_name = path_parts[1] if len(path_parts) > 1 else ""
+    
+    # Download the image using existing method
+    image_data = cs_service.download_blob_as_bytes(bucket_name, blob_name)
+    
+    return Response(
+        content=image_data,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="post-{download_image_request.postId}.png"'
+        }
+    )
+
+@app.post("/v1/update-request-status", response_model=UpdateRequestStatusResponse)
+async def update_request_status(update_request_status_request: UpdateRequestStatusRequest):
+    request = await firestore_service.get_request(update_request_status_request.requestId)
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if request.userId != update_request_status_request.userId:
+        raise HTTPException(status_code=403, detail="User does not have access to this request")
+    result = await firestore_service.update_request_status(update_request_status_request.requestId, update_request_status_request.status)
+    return UpdateRequestStatusResponse(success=result)

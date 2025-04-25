@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pru-market-gen-deployment
+  namespace: pru-market-gen-ns # Use the dedicated namespace
+  labels:
+    app: pru-market-gen
+spec:
+  replicas: 1 # HPA will manage this
+  selector:
+    matchLabels:
+      app: pru-market-gen
+  template:
+    metadata:
+      labels:
+        app: pru-market-gen
+    spec:
+      serviceAccountName: pru-market-gen-ksa # KSA annotated for Workload Identity
+      terminationGracePeriodSeconds: 60 # Give pods time to shut down gracefully
+      containers:
+      - name: pru-market-gen-container # Consistent naming
+        # Use a specific placeholder recognized by your CI/CD (e.g., Cloud Build's sed step)
+        image: __IMAGE_PLACEHOLDER__ # The __IMAGE_PLACEHOLDER__ gets replaced with the image build by the cloudbuild pipeline e.g., asia-southeast1-docker.pkg.dev/prusandbx-nprd-uat-b4sojn/my-app-repo/backend:latest
+        ports:
+        - containerPort: 3001 # Port your app listens on
+          name: http # Name the port
+        envFrom:
+        - configMapRef:
+            name: pru-market-gen-config
+        # Uncomment if using secrets
+        # - secretRef:
+        #     name: backend-secrets
+        resources:
+          # **Critical:** Set requests for reliable scheduling and QoS
+          requests:
+            memory: "4Gi" # Start based on expected usage
+            cpu: "1"      # Start based on expected usage
+          limits:
+            memory: "16Gi" # From Cloud Run config
+            cpu: "4"       # From Cloud Run config
+            nvidia.com/gpu: "1" # Request 1 L4 GPU
+        # Optional but Recommended: Probes for health checking
+        # startupProbe:
+        #   httpGet:
+        #     path: /startupz # Change to your app's startup check endpoint
+        #     port: http
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        #   failureThreshold: 6
+        # livenessProbe:
+        #   httpGet:
+        #     path: /healthz # Change to your app's health check endpoint
+        #     port: http
+        #   initialDelaySeconds: 60
+        #   periodSeconds: 15
+        #   failureThreshold: 3
+        # readinessProbe:
+        #   httpGet:
+        #     path: /readyz # Change to your app's readiness check endpoint
+        #     port: http
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        #   failureThreshold: 3
+      # GPU Scheduling Requirements
+      nodeSelector:
+        # Selects nodes from the L4 GPU pool created by GKE
+        cloud.google.com/gke-accelerator: nvidia-l4
+      tolerations:
+      # Allows scheduling on nodes with the GPU taint
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        #effect: "NoSchedule"
