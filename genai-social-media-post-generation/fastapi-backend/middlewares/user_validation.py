@@ -34,8 +34,13 @@ class UserValidationMiddleware(BaseHTTPMiddleware):
             return response
         
         if request.method == "POST":
-            body = await request.json()
-            user_id = body.get("userId")
+            content_type = request.headers.get("content-type", "").lower()
+            if "multipart/form-data" in content_type:
+                form_data = await request.form()
+                user_id = form_data.get("userId")
+            else:
+                body = await request.json()
+                user_id = body.get("userId")
             try:
                 if not user_id:
                     raise HTTPException(status_code=401, detail="Unauthorized: userId is required")

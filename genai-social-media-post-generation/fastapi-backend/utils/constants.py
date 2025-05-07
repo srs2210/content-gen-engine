@@ -34,6 +34,8 @@ GCS_OUTPUT_DIR_BG="Artefacts/Background_Processed"
 GCS_OUTPUT_DIR_POSTS="Artefacts/Final_Posts"
 GCS_OUTPUT_DIR_GENERATED_IMAGES="Artefacts/Generated_Images"
 
+GCS_USER_EVAL_UPLOADS_PREFIX = "user_eval_uploads"
+
 # --- Local Directory Configuration (for Cloud Functions, these will be temp directories) ---
 
 LOCAL_TEMP_DIR="/tmp"  # Use /tmp for Cloud Functions

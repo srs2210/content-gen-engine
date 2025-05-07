@@ -14,18 +14,22 @@
  limitations under the License.
  """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, Form, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from middlewares.tracker import TrackerMiddleware
 from middlewares.user_validation import UserValidationMiddleware
-from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse  # Import the RequestConfig and Post models
+from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse, EvaluatePostResponse  # Import the RequestConfig and Post models
 from service.firestore import firestore_service
-from utils.types import LoginRequest  # Import the LoginRequest model
+from utils.types import LoginRequest, RequestConfig, AspectRatio  # Import the LoginRequest model
 from utils.commons import add_signed_url_to_posts
-from background_scripts.content_generation_pipeline import generate_posts_background
+from background_scripts.content_generation_pipeline import generate_posts_background, add_post_to_db, Post, PostStatus, PostVote
 from service.cloud_storage import cs_service
 from fastapi.responses import Response
 from service.pubsub import pubsub_service
+from utils.constants import GCS_INPUT_BUCKET_ROOT, GCS_USER_EVAL_UPLOADS_PREFIX
+from google.cloud import storage
+import os
+from datetime import datetime
 
 app = FastAPI()
 """Middleware order is from bottom to top"""
@@ -39,6 +43,64 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(UserValidationMiddleware)
+
+@app.post("/v1/evaluate-post", response_model=EvaluatePostResponse)
+async def evaluate_post(
+    userId: str = Form(...), caption: str = Form(...), file: UploadFile = File(...)
+):
+    try:
+        # Create the request object
+        request_config = RequestConfig(
+            requestTitle="",
+            postDescription=caption,
+            aspectRatio=AspectRatio.full_image,
+            artStyle="",
+            subject="",
+            signOff="",
+            isRecruitmentRelated=False,
+            isCharityRelated=False,
+            postCount=0,
+        )
+        request_id = await firestore_service.create_request(userId, request_config)
+
+        # Upload image to GCS
+        project_id = os.environ.get("PROJECT_ID")
+        root_bucket = GCS_INPUT_BUCKET_ROOT
+        destination_blob_name = (
+            f"{GCS_USER_EVAL_UPLOADS_PREFIX}/{userId}/{request_id}-{file.filename}"
+        )
+
+        storage_client = storage.Client(project=project_id)
+        bucket = storage_client.bucket(root_bucket)
+        blob = bucket.blob(destination_blob_name)
+        blob.upload_from_file(file.file)
+        gcs_url = f"gs://{GCS_INPUT_BUCKET_ROOT}/{destination_blob_name}"
+
+        # Create post object
+        post = Post(
+            userId=userId,
+            generatedImageUrl="",
+            postCreationTime=datetime.now(),
+            requestId=request_id,
+            postStatus=PostStatus.original,
+            postVote=PostVote.novote,
+            evaluationStatus=EvaluationStatus.pending,
+            finalImageUrl=gcs_url,
+            postCaption=caption,
+        )
+        add_post_to_db(post)
+
+        # Return the reponse
+        return EvaluatePostResponse(
+            requestId=request_id,
+            message="File uploaded successfully",
+            gcsImagePath=gcs_url,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred: {e}",
+        )
 
 @app.post("/v1/generate-post", response_model=GeneratePostResponse)
 async def generate_post(generate_post_payload: GeneratePostRequest, background_tasks: BackgroundTasks):
@@ -151,3 +213,7 @@ async def update_request_status(update_request_status_request: UpdateRequestStat
         raise HTTPException(status_code=403, detail="User does not have access to this request")
     result = await firestore_service.update_request_status(update_request_status_request.requestId, update_request_status_request.status)
     return UpdateRequestStatusResponse(success=result)
+import uvicorn
+if __name__ == "__main__":
+    # Use the PORT environment variable provided by Cloud Run, defaulting to 8080
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
