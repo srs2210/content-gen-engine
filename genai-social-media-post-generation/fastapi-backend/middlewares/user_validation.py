@@ -28,19 +28,14 @@ class UserValidationMiddleware(BaseHTTPMiddleware):
         self.user_cache = {}
 
     async def dispatch(self, request: Request, call_next):
-        # Skip user validation for the /v1/login endpoint
-        if request.url.path == "/v1/login":
+        # Skip user validation for the /v1/login and /v1/evaluate-post endpoints
+        if request.url.path in ["/v1/login", "/v1/evaluate-post"]:
             response = await call_next(request)
             return response
         
         if request.method == "POST":
-            content_type = request.headers.get("content-type", "").lower()
-            if "multipart/form-data" in content_type:
-                form_data = await request.form()
-                user_id = form_data.get("userId")
-            else:
-                body = await request.json()
-                user_id = body.get("userId")
+            body = await request.json()
+            user_id = body.get("userId")
             try:
                 if not user_id:
                     raise HTTPException(status_code=401, detail="Unauthorized: userId is required")

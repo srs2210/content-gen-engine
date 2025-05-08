@@ -26,10 +26,11 @@ from background_scripts.content_generation_pipeline import generate_posts_backgr
 from service.cloud_storage import cs_service
 from fastapi.responses import Response
 from service.pubsub import pubsub_service
-from utils.constants import GCS_INPUT_BUCKET_ROOT, GCS_USER_EVAL_UPLOADS_PREFIX
+from utils.constants import GCS_INPUT_BUCKET_ROOT, GCS_USER_EVAL_UPLOADS_PREFIX, GCS_OUTPUT_DIR_POSTS, MAX_IMAGE_UPLOAD_SIZE_MB
 from google.cloud import storage
 import os
 from datetime import datetime
+from loguru import logger
 
 app = FastAPI()
 """Middleware order is from bottom to top"""
@@ -47,27 +48,36 @@ app.add_middleware(UserValidationMiddleware)
 @app.post("/v1/evaluate-post", response_model=EvaluatePostResponse)
 async def evaluate_post(
     userId: str = Form(...), caption: str = Form(...), file: UploadFile = File(...)
-):
+):  
+    logger.info(f"Processing evaluate-post for userId: {userId}, caption: {caption}, file: {file.filename}")
+    
+    if not userId:
+        raise HTTPException(status_code=401, detail="Unauthorized: userId is required")
+    user = await firestore_service.get_user(userId)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized: userId is invalid")
+
     try:
         # Create the request object
         request_config = RequestConfig(
-            requestTitle="",
+            requestTitle=f"Evaluation for {userId} - {file.filename}",
             postDescription=caption,
             aspectRatio=AspectRatio.full_image,
-            artStyle="",
+            artStyle="Photorealistic",
             subject="",
-            signOff="",
+            signOff="John Vu",
             isRecruitmentRelated=False,
             isCharityRelated=False,
             postCount=0,
         )
         request_id = await firestore_service.create_request(userId, request_config)
+        logger.info(f"Request ID created: {request_id}")
 
         # Upload image to GCS
         project_id = os.environ.get("PROJECT_ID")
         root_bucket = GCS_INPUT_BUCKET_ROOT
         destination_blob_name = (
-            f"{GCS_USER_EVAL_UPLOADS_PREFIX}/{userId}/{request_id}-{file.filename}"
+            f"{GCS_OUTPUT_DIR_POSTS}/{GCS_USER_EVAL_UPLOADS_PREFIX}-{request_id}-{file.filename}"
         )
 
         storage_client = storage.Client(project=project_id)
@@ -89,11 +99,13 @@ async def evaluate_post(
             postCaption=caption,
         )
         add_post_to_db(post)
+        
+        logger.info(f"Post object created for requestId: {request_id}")
 
         # Return the reponse
         return EvaluatePostResponse(
             requestId=request_id,
-            message="File uploaded successfully",
+            message="Evaluation Post File uploaded successfully",
             gcsImagePath=gcs_url,
         )
     except Exception as e:
