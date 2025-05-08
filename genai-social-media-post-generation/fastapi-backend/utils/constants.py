@@ -36,7 +36,7 @@ GCS_OUTPUT_DIR_GENERATED_IMAGES="Artefacts/Generated_Images"
 
 GCS_USER_EVAL_UPLOADS_PREFIX = "user_eval_uploads"
 
-# TODO: new constant
+# TODO(dagadeepansh): new constant
 MAX_IMAGE_UPLOAD_SIZE_MB = 20
 
 # --- Local Directory Configuration (for Cloud Functions, these will be temp directories) ---

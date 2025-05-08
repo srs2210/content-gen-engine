@@ -14,7 +14,7 @@
  limitations under the License.
  """
 
-# TODO: updated imports
+# TODO(dagadeepansh): updated imports
 from requests import Response
 from fastapi import HTTPException, UploadFile, status
 from utils.constants import MAX_IMAGE_UPLOAD_SIZE_MB
@@ -29,7 +29,7 @@ def validate_response_succeeds(response: Response):
             status_code=response.status_code, detail=str(response.content)
         )
 
-# TODO: new validator
+# TODO(dagadeepansh): new validator
 async def validate_eval_post_request(userId: str, caption: str, file: UploadFile):
     # Validate user ID
     user = await firestore_service.get_user(userId)

@@ -14,7 +14,7 @@
  limitations under the License.
  """
 
-# TODO: updated imports
+# TODO(dagadeepansh): updated imports
 from fastapi import FastAPI, HTTPException, BackgroundTasks, File, Form, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from middlewares.tracker import TrackerMiddleware
@@ -46,7 +46,7 @@ app.add_middleware(
 )
 app.add_middleware(UserValidationMiddleware)
 
-# TODO: updated endpoint
+# TODO(dagadeepansh): updated endpoint
 @app.post("/v1/evaluate-post", response_model=EvaluatePostResponse)
 async def evaluate_post(
     userId: str = Form(...),
