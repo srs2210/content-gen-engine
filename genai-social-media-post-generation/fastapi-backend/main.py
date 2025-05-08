@@ -14,6 +14,7 @@
  limitations under the License.
  """
 
+# TODO: updated imports
 from fastapi import FastAPI, HTTPException, BackgroundTasks, File, Form, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from middlewares.tracker import TrackerMiddleware
@@ -21,16 +22,16 @@ from middlewares.user_validation import UserValidationMiddleware
 from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse, EvaluatePostResponse  # Import the RequestConfig and Post models
 from service.firestore import firestore_service
 from utils.types import LoginRequest, RequestConfig, AspectRatio  # Import the LoginRequest model
-from utils.commons import add_signed_url_to_posts
+from utils.commons import add_signed_url_to_posts, upload_file_to_gcs
 from background_scripts.content_generation_pipeline import generate_posts_background, add_post_to_db, Post, PostStatus, PostVote
 from service.cloud_storage import cs_service
 from fastapi.responses import Response
 from service.pubsub import pubsub_service
-from utils.constants import GCS_INPUT_BUCKET_ROOT, GCS_USER_EVAL_UPLOADS_PREFIX, GCS_OUTPUT_DIR_POSTS, MAX_IMAGE_UPLOAD_SIZE_MB
-from google.cloud import storage
+from utils.constants import GCS_USER_EVAL_UPLOADS_PREFIX, GCS_OUTPUT_DIR_POSTS
 import os
 from datetime import datetime
 from loguru import logger
+from utils.validator import validate_eval_post_request
 
 app = FastAPI()
 """Middleware order is from bottom to top"""
@@ -45,18 +46,17 @@ app.add_middleware(
 )
 app.add_middleware(UserValidationMiddleware)
 
+# TODO: updated endpoint
 @app.post("/v1/evaluate-post", response_model=EvaluatePostResponse)
 async def evaluate_post(
-    userId: str = Form(...), caption: str = Form(...), file: UploadFile = File(...)
-):  
-    logger.info(f"Processing evaluate-post for userId: {userId}, caption: {caption}, file: {file.filename}")
-    
-    if not userId:
-        raise HTTPException(status_code=401, detail="Unauthorized: userId is required")
-    user = await firestore_service.get_user(userId)
-    if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized: userId is invalid")
-
+    userId: str = Form(...),
+    caption: str = Form(..., max_length=255),
+    file: UploadFile = File(..., description="The image file to upload."),
+):
+    logger.info(
+        f"Processing evaluate-post for userId: {userId}, caption: {caption}, file: {file.filename}"
+    )
+    await validate_eval_post_request(userId, caption, file)
     try:
         # Create the request object
         request_config = RequestConfig(
@@ -71,20 +71,12 @@ async def evaluate_post(
             postCount=0,
         )
         request_id = await firestore_service.create_request(userId, request_config)
-        logger.info(f"Request ID created: {request_id}")
+        logger.info(f"Request ID {request_id} created for user {userId}")
 
         # Upload image to GCS
-        project_id = os.environ.get("PROJECT_ID")
-        root_bucket = GCS_INPUT_BUCKET_ROOT
-        destination_blob_name = (
-            f"{GCS_OUTPUT_DIR_POSTS}/{GCS_USER_EVAL_UPLOADS_PREFIX}-{request_id}-{file.filename}"
-        )
-
-        storage_client = storage.Client(project=project_id)
-        bucket = storage_client.bucket(root_bucket)
-        blob = bucket.blob(destination_blob_name)
-        blob.upload_from_file(file.file)
-        gcs_url = f"gs://{GCS_INPUT_BUCKET_ROOT}/{destination_blob_name}"
+        destination_blob_name = f"{GCS_OUTPUT_DIR_POSTS}/{GCS_USER_EVAL_UPLOADS_PREFIX}-{request_id}-{file.filename}"
+        gcs_url = upload_file_to_gcs(file, destination_blob_name)
+        logger.info(f"File from user {userId} uploaded successfully to {gcs_url}")
 
         # Create post object
         post = Post(
@@ -99,10 +91,9 @@ async def evaluate_post(
             postCaption=caption,
         )
         add_post_to_db(post)
-        
         logger.info(f"Post object created for requestId: {request_id}")
 
-        # Return the reponse
+        # Return the response
         return EvaluatePostResponse(
             requestId=request_id,
             message="Evaluation Post File uploaded successfully",
