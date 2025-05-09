@@ -25,6 +25,7 @@ import SideBar from "./components/SideBar";
 import { GlobalContext, GlobalContextType } from "./contexts/global";
 import { SnackbarProvider } from "./contexts/SnackBarContext";
 import useSimpleAuth from "./hooks/useSimpleAuth";
+import EvaluatePostPage from "./pages/EvaluatePostPage";
 import GeneratePost from "./pages/GeneratePost";
 import Login from "./pages/Login";
 import ViewAllPosts from "./pages/ViewAllPosts";
@@ -81,6 +82,9 @@ function App() {
                 </Route>
                 <Route path="/view-all-posts">
                   <ViewAllPosts></ViewAllPosts>
+                </Route>
+                <Route path="/evaluate-post">
+                  <EvaluatePostPage></EvaluatePostPage>
                 </Route>
                 <Redirect to={"/generate-post"}></Redirect>
               </Switch>

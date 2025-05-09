@@ -30,6 +30,7 @@ interface ViewGeneratedPostsProps {
   requestConfig: GeneratePostForm;
   setIsRequestCompleted: React.Dispatch<React.SetStateAction<boolean>>;
   isRequestCompleted: boolean;
+  isEvaluationMode?: boolean;
 }
 
 const ViewGeneratedPosts = ({
@@ -37,6 +38,7 @@ const ViewGeneratedPosts = ({
   requestConfig,
   setIsRequestCompleted,
   isRequestCompleted,
+  isEvaluationMode = false,
 }: ViewGeneratedPostsProps) => {
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("pending");
   const [posts, setPosts] = useState<Post[]>([]);
@@ -62,7 +64,7 @@ const ViewGeneratedPosts = ({
             setIsRequestCompleted(true);
             if (currentTime - startTime >= 10 * 60 * 1000 || response.posts.length === 0) {
               await apiService.updateRequestStatus(user.uid, requestId, "error"); // If the request is not completed after 10 minutes or no posts were generated, set it to error
-              const errorMessage = "Sorry, something went wrong while generating posts. Please try again.";
+              const errorMessage = `Sorry, something went wrong while ${isEvaluationMode ? "evaluating" : "generating"} posts. Please try again.`;
               showSnackbar(errorMessage);
               setRequestStatus("error");
               setIsLoading(false);
@@ -104,7 +106,7 @@ const ViewGeneratedPosts = ({
         {(requestStatus === "pending" || requestStatus === "evaluating") && (
           <div className="flex items-center bg-red-300 px-4 py-2 rounded-md">
             <CircularProgress size={24} style={{ color: "black" }} className="mr-2" />
-            {requestStatus === "pending" && !isRequestCompleted ? "Generating Posts..." : "Fetching Posts..."}
+            {requestStatus === "pending" && !isRequestCompleted ? `${isEvaluationMode ? "Evaluating" : "Generating"} Posts...` : "Fetching Posts..."}
           </div>
         )}
       </div>
@@ -119,7 +121,7 @@ const ViewGeneratedPosts = ({
       {requestStatus === "error" && (
         <div className="flex justify-center items-center">
           <h1 className="text-red-500 font-bold">
-            Sorry, something went wrong while generating posts. Please update your inputs and try again.
+            Sorry, something went wrong while {isEvaluationMode ? "evaluating" : "generating"} posts. Please update your inputs and try again.
           </h1>
           <p className="text-gray-700">This may happen if your request contains:</p>
           <ul className="list-disc text-gray-700 text-left pl-8">

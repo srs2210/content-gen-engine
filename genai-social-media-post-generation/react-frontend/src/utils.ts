@@ -35,7 +35,9 @@ export const consolidateContentAccuracyAndBalanceCheck = (evaluationCheck: Conte
     return key !== "description_of_post";
   });
   const allPass = evaluationCheckKeys.every(
-    (key) => (evaluationCheck[key as keyof ContentAccuracyAndBalanceCheck] as EvaluationCheck).outcome === "compliant"
+    (key) =>
+      (evaluationCheck[key as keyof ContentAccuracyAndBalanceCheck] as EvaluationCheck).outcome === "compliant" ||
+      (evaluationCheck[key as keyof ContentAccuracyAndBalanceCheck] as EvaluationCheck).outcome === "not-applicable"
   );
   return allPass ? "pass" : "fail";
 };
@@ -43,7 +45,9 @@ export const consolidateContentAccuracyAndBalanceCheck = (evaluationCheck: Conte
 export const consolidateProhibitedContentCheck = (evaluationCheck: ProhibitedContentCheck) => {
   const evaluationCheckKeys = Object.keys(evaluationCheck).filter((key) => key !== "post_description");
   const allPass = evaluationCheckKeys.every(
-    (key) => (evaluationCheck[key as keyof ProhibitedContentCheck] as EvaluationCheck).outcome === "compliant"
+  (key) =>
+      (evaluationCheck[key as keyof ProhibitedContentCheck] as EvaluationCheck).outcome === "compliant" ||
+      (evaluationCheck[key as keyof ProhibitedContentCheck] as EvaluationCheck).outcome === "not-applicable"
   );
   return allPass ? "pass" : "fail";
 };
@@ -55,7 +59,9 @@ export const consolidateRepresentativeSpecificProhibitedContentCheck = (
   const allPass = evaluationCheckKeys.every(
     (key) =>
       (evaluationCheck[key as keyof RepresentativeSpecificProhibitedContentCheck] as EvaluationCheck).outcome ===
-      "compliant"
+      "compliant" ||
+      (evaluationCheck[key as keyof RepresentativeSpecificProhibitedContentCheck] as EvaluationCheck).outcome ===
+        "not-applicable"
   );
   return allPass ? "pass" : "fail";
 };

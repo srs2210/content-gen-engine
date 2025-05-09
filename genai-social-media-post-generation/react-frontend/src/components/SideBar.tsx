@@ -24,6 +24,10 @@ const routes = [
   {
     route: "/view-all-posts",
     displayText: "View All Posts",
+  },
+  {
+    route: "/evaluate-post",
+    displayText: "Evaluate Post",
   }
 ];
 

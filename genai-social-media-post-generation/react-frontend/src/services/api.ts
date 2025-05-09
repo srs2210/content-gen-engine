@@ -15,7 +15,7 @@
  */
 
 import axios from "axios";
-import { AllRequestsResponse, GeneratedResultsResponse, LoginResponse, PostVote, RequestConfig } from "../types";
+import { AllRequestsResponse, EvaluatePostResponse, GeneratedResultsResponse, LoginResponse, PostVote, RequestConfig } from "../types";
 
 export class ApiService {
   backendUrl: string;
@@ -115,6 +115,20 @@ export class ApiService {
       return response.data.success;
     } catch (error) {
       console.error("Error occurred while updating request status:", error);
+      throw error;
+    }
+  }
+
+  async evaluatePost(formData: FormData): Promise<EvaluatePostResponse> {
+    try {
+      const response = await axios.post(`${this.backendUrl}/v1/evaluate-post`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error occurred while evaluating post:", error);
       throw error;
     }
   }
