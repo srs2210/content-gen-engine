@@ -190,3 +190,24 @@ Once the script reports success, you can check your GKE deployment using `kubect
     * Ensure the image specified in `deployment.yaml` (after substitution) exists in Artifact Registry and GKE nodes have permission to pull it.
     * Verify resource requests/limits and GPU availability on nodes.
 * **Deployment Rollout Stuck:** Use `kubectl rollout history deployment/YOUR_DEPLOYMENT_NAME -n YOUR_K8S_NAMESPACE` and `kubectl describe deployment YOUR_DEPLOYMENT_NAME -n YOUR_K8S_NAMESPACE`.
+
+## Code changes
+
+### Changes in `fastapi-backend`:
+1) `fastapi-backend/main.py`:
+   - Lines 18-34
+   - Lines 50-106
+
+2) `fastapi-backend/middlewares/user_validation.py`:
+   - Lines 33-35
+
+3) `fastapi-backend/utils/commons.py`:
+   - Lines 18-24
+   - Lines 39-46
+
+4) `fastapi-backend/utils/constants.py`:
+   - Line 40
+
+5) `fastapi-backend/utils/validator.py`:
+   - Lines 18-23
+   - Lines 33-51
