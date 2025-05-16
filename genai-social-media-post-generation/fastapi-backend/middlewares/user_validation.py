@@ -30,7 +30,7 @@ class UserValidationMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Skip user validation for the /v1/login and /v1/evaluate-post endpoints
         # TODO(dagadeepansh): updated if condition
-        if request.url.path in ["/v1/login", "/v1/evaluate-post"]:
+        if request.url.path in ["/v1/login", "/v1/evaluate-post", "/v1/create-user"]:
             response = await call_next(request)
             return response
         

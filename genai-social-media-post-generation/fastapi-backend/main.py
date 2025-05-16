@@ -21,7 +21,7 @@ from middlewares.tracker import TrackerMiddleware
 from middlewares.user_validation import UserValidationMiddleware
 from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse, EvaluatePostResponse  # Import the RequestConfig and Post models
 from service.firestore import firestore_service
-from utils.types import LoginRequest, RequestConfig, AspectRatio  # Import the LoginRequest model
+from utils.types import LoginRequest, RequestConfig, AspectRatio, User  # Import the LoginRequest model
 from utils.commons import add_signed_url_to_posts, upload_file_to_gcs
 from background_scripts.content_generation_pipeline import generate_posts_background, add_post_to_db, Post, PostStatus, PostVote
 from service.cloud_storage import cs_service
@@ -216,6 +216,39 @@ async def update_request_status(update_request_status_request: UpdateRequestStat
         raise HTTPException(status_code=403, detail="User does not have access to this request")
     result = await firestore_service.update_request_status(update_request_status_request.requestId, update_request_status_request.status)
     return UpdateRequestStatusResponse(success=result)
+
+@app.post("/v1/create-user", response_model=User)
+async def create_user_if_not_exists(userId: str):
+    try:
+        # Check if user already exists
+        existing_user = await firestore_service.get_user(userId)
+        if existing_user:
+            logger.info(f"User already exists with userId: {userId}")
+            return existing_user
+
+        # Create new user with default values
+        logger.info(f"User with ID {userId} does not exist")
+        new_user = User(
+            userId=userId,
+            name=userId,  # Default empty values
+            email="",
+            pin="",
+            createdAt=datetime.now(),
+            signOff=""
+        )
+
+        # Save to Firestore
+        await firestore_service.create_user(new_user)
+        logger.info(f"Created new user with userId: {userId}")
+        return new_user
+
+    except Exception as e:
+        logger.error(f"Error creating user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create user: {str(e)}"
+        )
+
 import uvicorn
 if __name__ == "__main__":
     # Use the PORT environment variable provided by Cloud Run, defaulting to 8080
