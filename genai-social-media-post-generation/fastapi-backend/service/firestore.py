@@ -56,7 +56,8 @@ class FirestoreService:
 
     # CRUD operations for Users
     async def create_user(self, user: User):
-        await self.users_collection.add(user.model_dump())
+        users_collection = await self.users_collection
+        await users_collection.add(user.model_dump())
 
     async def get_user(self, user_id: str) -> Optional[User]:
         user_collection = await self.users_collection
