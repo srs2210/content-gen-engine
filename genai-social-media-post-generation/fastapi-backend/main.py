@@ -29,7 +29,7 @@ from fastapi.responses import Response
 from service.pubsub import pubsub_service
 from utils.constants import GCS_USER_EVAL_UPLOADS_PREFIX, GCS_OUTPUT_DIR_POSTS
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from loguru import logger
 from utils.validator import validate_eval_post_request
 
@@ -230,10 +230,10 @@ async def create_user_if_not_exists(userId: str):
         logger.info(f"User with ID {userId} does not exist")
         new_user = User(
             userId=userId,
-            name=userId,  # Default empty values
+            name=userId,
             email="",
             pin="",
-            createdAt=datetime.now(),
+            createdAt=datetime.now(timezone.utc),
             signOff=""
         )
 
