@@ -18,8 +18,8 @@
 cd $(dirname $0)/..
 
 # Variables
-export PROJECT_ID=my-vertexai-project-id
-export CLOUDRUN_SERVICE_NAME=content-generator-frontend-cohort-0
+export PROJECT_ID=pso-hackathon-demo
+export CLOUDRUN_SERVICE_NAME=content-generator-frontend
 export CLOUDRUN_SERVICE_IMAGE_NAME=gcr.io/$PROJECT_ID/$CLOUDRUN_SERVICE_NAME
 
 # Setup

@@ -21,10 +21,10 @@ import os
 PROJECT_ID = os.environ.get("PROJECT_ID")
 PROJECT_NUMBER = os.environ.get("PROJECT_NUMBER")
 FIRESTORE_ID = os.environ.get("FIRESTORE_ID")
-SERVICE_ACCOUNT_FOR_SIGNING_URLS = "1003801603843-compute@developer.gserviceaccount.com"
+SERVICE_ACCOUNT_FOR_SIGNING_URLS = "164067361539-compute@developer.gserviceaccount.com"
 
-GCS_INPUT_BUCKET_ROOT="1003801603843_marketing_content_generation_inputs"
-GCS_INPUT_BUCKET=f"{PROJECT_NUMBER}_{GCS_INPUT_BUCKET_ROOT}"
+GCS_INPUT_BUCKET_ROOT="marketingcontent"
+# GCS_INPUT_BUCKET=f"{PROJECT_NUMBER}_{GCS_INPUT_BUCKET_ROOT}"
 
 GCS_INPUT_DIR_ACTOR="Artefacts/Actors"
 GCS_INPUT_DIR_TEMPLATES="Artefacts/Background"

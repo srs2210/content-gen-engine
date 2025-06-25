@@ -36,7 +36,7 @@ from utils.validator import validate_eval_post_request
 app = FastAPI()
 """Middleware order is from bottom to top"""
 # user_validation_middleware = UserValidationMiddleware()
-app.add_middleware(TrackerMiddleware)
+# app.add_middleware(TrackerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,7 +44,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(UserValidationMiddleware)
+# app.add_middleware(UserValidationMiddleware)
 
 # TODO(dagadeepansh): updated endpoint
 @app.post("/v1/evaluate-post", response_model=EvaluatePostResponse)
