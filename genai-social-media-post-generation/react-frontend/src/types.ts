@@ -65,6 +65,11 @@ export enum WorkflowStage {
   VIEW_GENERATED_POSTS = "View Generated Posts",
 }
 
+export enum EvaluationWorkflowStage {
+  UPLOAD_EVALUATION_CONTENT = "Upload Content",
+  VIEW_EVALUATION_RESULTS = "View Results",
+}
+
 export type Request = {
   requestId: string;
   userId: string;
@@ -212,4 +217,10 @@ export interface FormattedCheck {
 
 export interface AllRequestsResponse {
   requests: Request[];
+}
+
+export interface EvaluatePostResponse {
+  requestId: string;
+  message: string;
+  gcsImagePath: string;
 }

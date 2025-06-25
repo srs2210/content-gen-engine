@@ -14,23 +14,29 @@
  limitations under the License.
  """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+# TODO(dagadeepansh): updated imports
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, Form, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from middlewares.tracker import TrackerMiddleware
 from middlewares.user_validation import UserValidationMiddleware
-from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse  # Import the RequestConfig and Post models
+from utils.types import AllRequestsPayload, AllRequestsResponse, DownloadImageRequest, EvaluationStatus, GeneratePostRequest, GeneratePostResponse, GeneratedResultsRequest, GeneratedResultsResponse, LoginResponse, RequestStatus, RunGenerationPipelineRequest, UpdatePostVoteRequest, UpdatePostVoteResponse, UpdateRequestStatusRequest, UpdateRequestStatusResponse, UpdateUserSignOffRequest, UpdateUserSignOffResponse, EvaluatePostResponse  # Import the RequestConfig and Post models
 from service.firestore import firestore_service
-from utils.types import LoginRequest  # Import the LoginRequest model
-from utils.commons import add_signed_url_to_posts
-from background_scripts.content_generation_pipeline import generate_posts_background
+from utils.types import LoginRequest, RequestConfig, AspectRatio, User  # Import the LoginRequest model
+from utils.commons import add_signed_url_to_posts, upload_file_to_gcs
+from background_scripts.content_generation_pipeline import generate_posts_background, add_post_to_db, Post, PostStatus, PostVote
 from service.cloud_storage import cs_service
 from fastapi.responses import Response
 from service.pubsub import pubsub_service
+from utils.constants import GCS_USER_EVAL_UPLOADS_PREFIX, GCS_OUTPUT_DIR_POSTS
+import os
+from datetime import datetime, timezone
+from loguru import logger
+from utils.validator import validate_eval_post_request
 
 app = FastAPI()
 """Middleware order is from bottom to top"""
 # user_validation_middleware = UserValidationMiddleware()
-app.add_middleware(TrackerMiddleware)
+# app.add_middleware(TrackerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,7 +44,66 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(UserValidationMiddleware)
+# app.add_middleware(UserValidationMiddleware)
+
+# TODO(dagadeepansh): updated endpoint
+@app.post("/v1/evaluate-post", response_model=EvaluatePostResponse)
+async def evaluate_post(
+    userId: str = Form(...),
+    caption: str = Form(..., max_length=255),
+    file: UploadFile = File(..., description="The image file to upload."),
+):
+    logger.info(
+        f"Processing evaluate-post for userId: {userId}, caption: {caption}, file: {file.filename}"
+    )
+    await validate_eval_post_request(userId, caption, file)
+    try:
+        # Create the request object
+        request_config = RequestConfig(
+            requestTitle=f"Evaluation for {userId} - {file.filename}",
+            postDescription=caption,
+            aspectRatio=AspectRatio.full_image,
+            artStyle="Photorealistic",
+            subject="",
+            signOff="John Vu",
+            isRecruitmentRelated=False,
+            isCharityRelated=False,
+            postCount=0,
+        )
+        request_id = await firestore_service.create_request(userId, request_config)
+        logger.info(f"Request ID {request_id} created for user {userId}")
+
+        # Upload image to GCS
+        destination_blob_name = f"{GCS_OUTPUT_DIR_POSTS}/{GCS_USER_EVAL_UPLOADS_PREFIX}-{request_id}-{file.filename}"
+        gcs_url = upload_file_to_gcs(file, destination_blob_name)
+        logger.info(f"File from user {userId} uploaded successfully to {gcs_url}")
+
+        # Create post object
+        post = Post(
+            userId=userId,
+            generatedImageUrl="",
+            postCreationTime=datetime.now(),
+            requestId=request_id,
+            postStatus=PostStatus.original,
+            postVote=PostVote.novote,
+            evaluationStatus=EvaluationStatus.pending,
+            finalImageUrl=gcs_url,
+            postCaption=caption,
+        )
+        add_post_to_db(post)
+        logger.info(f"Post object created for requestId: {request_id}")
+
+        # Return the response
+        return EvaluatePostResponse(
+            requestId=request_id,
+            message="Evaluation Post File uploaded successfully",
+            gcsImagePath=gcs_url,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred: {e}",
+        )
 
 @app.post("/v1/generate-post", response_model=GeneratePostResponse)
 async def generate_post(generate_post_payload: GeneratePostRequest, background_tasks: BackgroundTasks):
@@ -151,3 +216,40 @@ async def update_request_status(update_request_status_request: UpdateRequestStat
         raise HTTPException(status_code=403, detail="User does not have access to this request")
     result = await firestore_service.update_request_status(update_request_status_request.requestId, update_request_status_request.status)
     return UpdateRequestStatusResponse(success=result)
+
+@app.post("/v1/create-user", response_model=User)
+async def create_user_if_not_exists(userId: str):
+    try:
+        # Check if user already exists
+        existing_user = await firestore_service.get_user(userId)
+        if existing_user:
+            logger.info(f"User already exists with userId: {userId}")
+            return existing_user
+
+        # Create new user with default values
+        logger.info(f"User with ID {userId} does not exist")
+        new_user = User(
+            userId=userId,
+            name=userId,
+            email="",
+            pin="",
+            createdAt=datetime.now(timezone.utc),
+            signOff=""
+        )
+
+        # Save to Firestore
+        await firestore_service.create_user(new_user)
+        logger.info(f"Created new user with userId: {userId}")
+        return new_user
+
+    except Exception as e:
+        logger.error(f"Error creating user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create user: {str(e)}"
+        )
+
+import uvicorn
+if __name__ == "__main__":
+    # Use the PORT environment variable provided by Cloud Run, defaulting to 8080
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

@@ -13,9 +13,9 @@
 # limitations under the License.
 
 # Your project name. It acts as a unique identifier.
-export PROJECT_NAME="prusandbx-nprd-uat-rt5044"
+export PROJECT_NAME="pso-hackathon-demo"
 # Your GCP Project ID
-export PROJECT_ID="prusandbx-nprd-uat-rt5044"
+export PROJECT_ID="pso-hackathon-demo"
 # Your GCP Project Number (if needed)
-export PROJECT_NUMBER=731889068989
-export FIRESTORE_ID="(default)"
+export PROJECT_NUMBER=164067361539
+export FIRESTORE_ID="firestoredb"

@@ -14,10 +14,14 @@
  limitations under the License.
  """
 
+# TODO(dagadeepansh): updated imports
 from service.cloud_storage import cs_service
 from utils.types import Post
 from typing import List
 import concurrent.futures
+from fastapi import UploadFile
+from utils.constants import GCS_INPUT_BUCKET_ROOT, PROJECT_ID
+from google.cloud import storage
 
 def add_signed_url_to_posts(posts: List[Post]):
     print("adding signed url to posts")
@@ -30,3 +34,13 @@ def add_signed_url_to_posts(posts: List[Post]):
     # for post in posts:
     #     post.finalImageUrl = cs_service.generate_signed_url_with_impersonation(post.finalImageUrl)
     return posts
+
+# TODO(dagadeepansh): new helper method
+def upload_file_to_gcs(file: UploadFile, destination_blob_name: str) -> str:
+    """Helper function to upload a file to Google Cloud Storage."""
+    project_id = PROJECT_ID
+    storage_client = storage.Client(project=project_id)
+    bucket = storage_client.bucket(GCS_INPUT_BUCKET_ROOT)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_file(file.file)
+    return f"gs://{GCS_INPUT_BUCKET_ROOT}/{destination_blob_name}"

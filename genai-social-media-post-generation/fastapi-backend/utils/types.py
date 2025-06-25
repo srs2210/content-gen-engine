@@ -205,3 +205,8 @@ class UpdateRequestStatusRequest(BaseModel):
 
 class UpdateRequestStatusResponse(BaseModel):
     success: bool
+
+class EvaluatePostResponse(BaseModel):
+    requestId: str
+    message: str
+    gcsImagePath: str
