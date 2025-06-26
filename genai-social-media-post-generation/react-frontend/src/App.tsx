@@ -18,7 +18,7 @@ import { ThemeProvider, createTheme } from "@mui/material";
 import { ReactElement, useState } from "react";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 import "./App.css";
-import AppFooter from "./components/AppFooter";
+// import AppFooter from "./components/AppFooter";
 import AppHeader from "./components/AppHeader";
 import PopUp from "./components/PopUp";
 import SideBar from "./components/SideBar";
