@@ -1168,8 +1168,8 @@ def aspect_ratio_to_template(aspect_ratio):
 
 
 def create_final_sign_off_text(sign_off, is_recruitment_related, is_charity_related):
-    disclaimer_link = "https://www.prudential.com.sg/fc-info"
-    charity_disclaimer = "This activity has not been reviewed or approved by Prudential"
+    disclaimer_link = "https://www.xyz-org.com/fc-info"
+    charity_disclaimer = "This activity has not been reviewed or approved by the Organization."
 
     final_sign_off_text = sign_off
 

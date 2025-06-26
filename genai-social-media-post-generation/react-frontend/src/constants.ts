@@ -24,9 +24,7 @@ Time: 10:00 AM - 11:00 AM
 Location: 123 Main Street, Singapore
 `;
 export const POST_TITLE_PLACEHOLDER = "Enter your post title here";
-export const SIGN_OFF_PLACEHOLDER = `e.g XYZ Associates.
-An Agency Unit of Prudential Assurance Company Singapore
-`;
+export const SIGN_OFF_PLACEHOLDER = `e.g XYZ Associates.`;
 export const SUBJECT_PLACEHOLDER = "e.g Asian Man in his 30s holding a box of popcorn";
 
 export const BACKEND_ASPECT_RATIO_TO_FRONTEND_ASPECT_RATIO = {

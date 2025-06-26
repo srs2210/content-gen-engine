@@ -50,7 +50,7 @@ def main():
             'postDescription': 'Create a post to promote an ice cream giveaway. To participate, customers simply need to fill out a survey at privy.sg/icecream',
             'subject': 'Asian man holding an ice cream',
             'artStyle': 'Photorealistic',
-            'signOff': 'XYZ Associates\nAn Agency Unit of Prudential Assurance Company Singapore',
+            'signOff': 'XYZ Associates',
             'postCount': 4,
             'aspectRatio': 'square',
             'backgroundColor': None,

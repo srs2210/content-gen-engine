@@ -21,7 +21,7 @@ const AppFooter = () => {
         <p className="text-xs text-gray-500">Powered by:</p>
         <img
           src="/ai_lab_logo.png"
-          alt="Prudential"
+          alt="Company Logo"
           className="h-full max-h-[60px] bg-white object-contain rounded-xl p-2"
         />
       </div>
