@@ -19,3 +19,7 @@ onnxruntime
 transparent-background
 opencv-python-headless
 python-multipart
+torch
+torchvision
+torchaudio
+flet==0.25.2

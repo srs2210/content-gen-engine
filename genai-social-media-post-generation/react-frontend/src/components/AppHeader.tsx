@@ -23,9 +23,9 @@ const AppHeader = ({ user, signOut }: { user: UserData; signOut: () => void }) =
 
   return (
     <div className="app-header px-4 flex items-center bg-[#ED1B2E]">
-      <LinkWithQuery to="/generate-post">
+      {/* <LinkWithQuery to="/generate-post">
         <img src={"/prudential_logo.png"} alt="" className="h-full max-h-[60px] bg-white object-contain rounded-xl p-2" />
-      </LinkWithQuery>
+      </LinkWithQuery> */}
       <p className="flex items-center ml-4 border-l-2 border-gray-300 pl-4 h-[60px] font-bold text-xl text-white">Post Generator</p>
       <div className="flex flex-row gap-6 items-center ml-auto text-gray-500">
         <p className="text-white">Welcome, {user.display_name}!</p>

@@ -89,7 +89,7 @@ function App() {
                 <Redirect to={"/generate-post"}></Redirect>
               </Switch>
             </div>}
-            <AppFooter></AppFooter>
+            {/* <AppFooter></AppFooter> */}
             </div>
           </BrowserRouter>
         </ThemeProvider>

@@ -25,7 +25,7 @@ export class ApiService {
     // this.backendUrl = "https://my-vertexai-project-id-backend-1003801603843.us-central1.run.app";
     if (process.env.NODE_ENV === "production") {
       /** Change the backend URL to deployed backend URL */
-      this.backendUrl = "https://my-vertexai-project-id-backend-1003801603843.us-central1.run.app";
+      this.backendUrl = "https://content-generation-service-backend-164067361539.asia-southeast1.run.app";
     }
   }
 

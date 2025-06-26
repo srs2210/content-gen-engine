@@ -35,7 +35,7 @@ def generate_images(prompt, num_images=3):
     vertexai.init(project=os.getenv("GOOGLE_CLOUD_PROJECT"), location="us-central1")
 
     # Create the image generation model
-    generation_model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-001")
+    generation_model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
 
     # Generate images
     generated_images = generation_model.generate_images(

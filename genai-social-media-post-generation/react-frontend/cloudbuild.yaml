@@ -1,12 +1,19 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  entrypoint: 'bash'
-  args: ['-c', 'docker pull $REPO_FULL_NAME:latest || exit 0']
-- name: 'gcr.io/cloud-builders/docker'
-  args: [
-    'build',
-    '-t', '$REPO_FULL_NAME:latest',
-    '--cache-from', '$REPO_FULL_NAME:latest',
-    '.'
-  ]
+  # - name: 'gcr.io/cloud-builders/docker'
+  #   entrypoint: 'bash'
+  #   args: ['-c', 'docker pull $REPO_FULL_NAME:latest || exit 0']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', '$REPO_FULL_NAME:latest',
+      '.'
+    ]
+    id: 'Build'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$REPO_FULL_NAME:latest'] # Corrected image path format
+    id: 'Push Latest'
+    waitFor: ['Build'] # Ensure build is done before pushing
+
 images: ['$REPO_FULL_NAME:latest']

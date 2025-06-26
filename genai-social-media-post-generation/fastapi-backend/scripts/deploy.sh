@@ -50,7 +50,7 @@ gcloud beta run deploy $CLOUDRUN_SERVICE_NAME \
     --image $CLOUDRUN_SERVICE_IMAGE_NAME \
     --region asia-southeast1 \
     --min-instances 1 \
-    --max-instances 4 \
+    --max-instances 3 \
     --no-cpu-throttling \
     --cpu 4 \
     --memory 16Gi \
@@ -61,5 +61,5 @@ gcloud beta run deploy $CLOUDRUN_SERVICE_NAME \
     --gpu=1 \
     --gpu-type=nvidia-l4 \
     --port 3001 \
-    --allow-unauthenticated
-    # --no-gpu-zonal-redundancy
+    --allow-unauthenticated \
+    --no-gpu-zonal-redundancy

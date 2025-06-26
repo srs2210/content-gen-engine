@@ -17,6 +17,10 @@
 from enum import Enum
 import os
 
+# Gemini Models
+MODEL_GEMINI_PRO = "gemini-2.5-pro"
+MODEL_IMAGEN = "imagen-3.0-generate-002"
+
 # Project Settings
 PROJECT_ID = os.environ.get("PROJECT_ID")
 PROJECT_NUMBER = os.environ.get("PROJECT_NUMBER")

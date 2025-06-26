@@ -50,7 +50,7 @@ from vertexai.preview.vision_models import ImageGenerationModel
 # --- GCP Project Configuration ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
 PROJECT_NUMBER = os.environ.get("PROJECT_NUMBER")
-FIRESTORE_INSTANCE_ID = "(default)"
+FIRESTORE_INSTANCE_ID = os.environ.get("FIRESTORE_ID")
 db = firestore.Client(project=PROJECT_ID, database=FIRESTORE_INSTANCE_ID)
 
 # Class Definitions
@@ -854,9 +854,7 @@ def find_files_with_prefix(directory, prefix):
 
 
 def generate_image_generation_input_params(input_text):
-    model = GenerativeModel(
-        "gemini-1.5-pro-002",
-    )
+    model = GenerativeModel("gemini-2.5-pro")
     generation_config = {
         "max_output_tokens": 8192,
         "temperature": 1,
@@ -882,14 +880,14 @@ def generate_image_generation_input_params(input_text):
     return subject, age, clothing, theme
 
 
-def invoke_gemini_for_text(prompt, model_input="gemini-1.5-pro-002"):
+def invoke_gemini_for_text(prompt, model_input="gemini-2.5-pro"):
     model = GenerativeModel(model_input)
     response = model.generate_content(prompt)
     return response.text
 
 
 def generate_imagen_outputs(
-    prompt, number_of_images, aspect_ratio, model="imagen-3.0-generate-001"
+    prompt, number_of_images, aspect_ratio, model="imagen-3.0-generate-002"
 ):
     retry_count = 0
     while retry_count < 3:
@@ -973,7 +971,7 @@ def generate_image_assets(
                 imagen_prompt,
                 1,
                 "1:1",
-                "imagen-3.0-generate-001",
+                "imagen-3.0-generate-002",
             )
             for _ in range(image_count)  # Generate 4 images
         ]
@@ -1008,7 +1006,7 @@ def generate_image_assets(
 
 def generate_post_text(post_text_prompt_input):
     model = GenerativeModel(
-        "gemini-1.5-flash-002",
+        "gemini-2.5-pro",
     )
     generation_config = {
         "max_output_tokens": 8192,
@@ -1081,7 +1079,7 @@ def generate_platform_specific_instructions(platform: SocialMediaPlatform) -> st
 
 def generate_post_caption(post_text_prompt_input, social_media_platform: SocialMediaPlatform = SocialMediaPlatform.instagram):
     model = GenerativeModel(
-        "gemini-1.5-pro-002",
+        "gemini-2.5-pro",
     )
 
     generation_config = {
