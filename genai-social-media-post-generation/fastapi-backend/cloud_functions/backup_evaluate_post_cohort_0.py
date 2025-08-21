@@ -125,7 +125,7 @@ def evaluate_post_by_image_path(image_path, post_caption):
         )
 
         model = GenerativeModel(
-            "gemini-2.5-pro",
+            "gemini-2.5-flash",
         )
         generation_config = {
             "max_output_tokens": 8192,

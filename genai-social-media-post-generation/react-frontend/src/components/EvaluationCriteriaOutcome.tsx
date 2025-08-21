@@ -33,11 +33,11 @@ const EvaluationCriteriaOutcome: React.FC<EvaluationCriteriaOutcomeProps> = ({ o
     openPopUp(<EvaluationReportModal evaluationReport={evaluationReport} />);
   };
   return (
-    <div onClick={handleClick} className={`flex gap-4 px-4 py-2 rounded-xl cursor-pointer items-center ${outcome === 'pass' ? 'bg-white border border-green-500' : 'bg-red-300 border border-red-500'}`}>
+    <div onClick={handleClick} className={`flex gap-4 px-4 py-2 rounded-xl cursor-pointer items-center ${outcome === 'pass' ? 'bg-white border border-green-500' : 'bg-blue-300 border border-blue-500'}`}>
       {outcome === 'pass' ? (
         <CheckCircle className="text-green-500" />
       ) : (
-        <Cancel className="text-red-500" />
+        <Cancel className="text-blue-500" />
       )}
       <p className="text-sm">{checkName}</p>
     </div>

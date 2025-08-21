@@ -130,7 +130,7 @@ const GeneratedPost = ({ post, evaluationOutcome, postNumber }: GeneratedPostPro
               <div className="flex gap-2">
                 <p
                   className={`text-base font-medium text-center px-4 py-2 rounded-full w-fit text-white ${
-                    evaluationOutcome === "pass" ? "bg-green-500" : "bg-red-500"
+                    evaluationOutcome === "pass" ? "bg-green-500" : "bg-blue-500"
                   }`}
                 >
                   {evaluationOutcome === "pass" ? "Passed" : "Failed"}

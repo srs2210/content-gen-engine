@@ -79,35 +79,35 @@ const GeneratePostHeader = ({
           <div
             onClick={() => setWorkflowStage(WorkflowStage.CONFIGURE_POST)}
             className={`flex items-center border-2 rounded-full p-4 cursor-pointer ${
-              workflowStage === WorkflowStage.CONFIGURE_POST ? "border-red-600" : "border-red-200"
+              workflowStage === WorkflowStage.CONFIGURE_POST ? "border-blue-600" : "border-blue-200"
             }`}
           >
             <div
               className={`w-8 h-8 ${
-                workflowStage === WorkflowStage.CONFIGURE_POST ? "bg-red-600" : "bg-red-200"
+                workflowStage === WorkflowStage.CONFIGURE_POST ? "bg-blue-600" : "bg-blue-200"
               } rounded-full flex items-center justify-center`}
             >
               1
             </div>
             <span className="ml-2 text-sm font-medium">Configure Post</span>
           </div>
-          <div className={`h-1 w-8 bg-gray-300 mx-2 ${requestId ? "bg-red-600" : "bg-gray-300"}`}></div>
+          <div className={`h-1 w-8 bg-gray-300 mx-2 ${requestId ? "bg-blue-600" : "bg-gray-300"}`}></div>
           <div
             onClick={handleViewGeneratedPosts}
             className={`flex items-center border-2 rounded-full p-4 cursor-pointer ${
               workflowStage === WorkflowStage.VIEW_GENERATED_POSTS
-                ? "border-red-600"
+                ? "border-blue-600"
                 : requestId
-                ? "border-red-200"
+                ? "border-blue-200"
                 : "border-gray-200 cursor-not-allowed"
             }`}
           >
             <div
               className={`w-8 h-8 ${
                 workflowStage === WorkflowStage.VIEW_GENERATED_POSTS
-                  ? "bg-red-600"
+                  ? "bg-blue-600"
                   : requestId
-                  ? "bg-red-200"
+                  ? "bg-blue-200"
                   : "bg-gray-300"
               } rounded-full flex items-center justify-center`}
             >
@@ -117,7 +117,7 @@ const GeneratePostHeader = ({
           </div>
         </div>
         {isRequestCompleted && requestId && (
-          <div onClick={handleCreateNewPost} className="bg-red-600 text-white px-4 py-2 rounded-md cursor-pointer h-fit flex items-center gap-1">
+          <div onClick={handleCreateNewPost} className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer h-fit flex items-center gap-1">
             <AddIcon fontSize="small" />
             Create New Post
           </div>

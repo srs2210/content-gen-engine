@@ -22,7 +22,7 @@ import { LinkWithQuery } from "./LinkWithQuery";
 const AppHeader = ({ user, signOut }: { user: UserData; signOut: () => void }) => {
 
   return (
-    <div className="app-header px-4 flex items-center bg-[#ED1B2E]">
+    <div className="app-header px-4 flex items-center bg-[#2563EB]">
       <LinkWithQuery to="/generate-post">
         <img src={"/gcloud-logo.svg"} alt="" className="h-full max-h-[60px] bg-white object-contain rounded-xl p-2" />
       </LinkWithQuery>

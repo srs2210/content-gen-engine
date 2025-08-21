@@ -104,7 +104,7 @@ const ViewGeneratedPosts = ({
       <div className="flex justify-between sticky top-0 bg-gray-100 z-10 py-2">
         <h1 className="text-xl font-medium">{requestConfig.requestTitle}</h1>
         {(requestStatus === "pending" || requestStatus === "evaluating") && (
-          <div className="flex items-center bg-red-300 px-4 py-2 rounded-md">
+          <div className="flex items-center bg-blue-300 px-4 py-2 rounded-md">
             <CircularProgress size={24} style={{ color: "black" }} className="mr-2" />
             {requestStatus === "pending" && !isRequestCompleted ? `${isEvaluationMode ? "Evaluating" : "Generating"} Posts...` : "Fetching Posts..."}
           </div>
@@ -120,7 +120,7 @@ const ViewGeneratedPosts = ({
         ))}
       {requestStatus === "error" && (
         <div className="flex justify-center items-center">
-          <h1 className="text-red-500 font-bold">
+          <h1 className="text-blue-500 font-bold">
             Sorry, something went wrong while {isEvaluationMode ? "evaluating" : "generating"} posts. Please update your inputs and try again.
           </h1>
           <p className="text-gray-700">This may happen if your request contains:</p>
@@ -133,7 +133,7 @@ const ViewGeneratedPosts = ({
       )}
       {!isLoading && posts.length === 0 && requestStatus !== "error" && (
         <div className="flex flex-col justify-center items-center text-center">
-          <h1 className="text-red-500 font-bold mb-2">
+          <h1 className="text-blue-500 font-bold mb-2">
             No posts were generated. Please update your inputs and try again.
           </h1>
           <p className="text-gray-700">This may happen if your request contains:</p>

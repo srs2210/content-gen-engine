@@ -856,7 +856,7 @@ def find_files_with_prefix(directory, prefix):
 
 def generate_image_generation_input_params(input_text):
     model = GenerativeModel(
-        "gemini-2.5-pro",
+        "gemini-2.5-flash",
     )
     generation_config = {
         "max_output_tokens": 8192,
@@ -883,7 +883,7 @@ def generate_image_generation_input_params(input_text):
     return subject, age, clothing, theme
 
 
-def invoke_gemini_for_text(prompt, model_input="gemini-2.5-pro"):
+def invoke_gemini_for_text(prompt, model_input="gemini-2.5-flash"):
     model = GenerativeModel(model_input)
     response = model.generate_content(prompt)
     return response.text
@@ -984,7 +984,7 @@ def generate_image_assets(
 
 def generate_post_text(post_text_prompt_input):
     model = GenerativeModel(
-        "gemini-2.5-pro",
+        "gemini-2.5-flash",
     )
     generation_config = {
         "max_output_tokens": 8192,

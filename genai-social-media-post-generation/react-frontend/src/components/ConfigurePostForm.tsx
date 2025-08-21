@@ -59,7 +59,7 @@ const ConfigurePostForm = ({
           disabled={isDisabled}
         />
         {isFormSubmitted && formData.requestTitle.length < 3 && (
-          <p className="text-red-500 text-xs mt-1">Title must be at least 3 characters long.</p>
+          <p className="text-blue-500 text-xs mt-1">Title must be at least 3 characters long.</p>
         )}
       </div>
 
@@ -81,7 +81,7 @@ const ConfigurePostForm = ({
           disabled={isDisabled}
         />
         {isFormSubmitted && formData.postDescription.length < 10 && (
-          <p className="text-red-500 text-xs mt-1">Description must be at least 10 characters long.</p>
+          <p className="text-blue-500 text-xs mt-1">Description must be at least 10 characters long.</p>
         )}
       </div>
 
@@ -250,7 +250,7 @@ const ConfigurePostForm = ({
       <div className="mt-6 flex items-center justify-center">
         <button
           type="submit"
-          className={`w-fit px-4 bg-red-600 text-white py-2 rounded-md hover:bg-red-700 focus:outline-none ${
+          className={`w-fit px-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 focus:outline-none ${
             isDisabled ? "opacity-50 cursor-not-allowed" : ""
           }`}
           disabled={isDisabled}

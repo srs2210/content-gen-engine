@@ -123,7 +123,7 @@ const UploadEvaluationContent: React.FC<UploadEvaluationContentProps> = ({
           className={`flex flex-col justify-center items-center border-2 border-dashed rounded-lg p-10 h-80 max-w-80 
             text-gray-500 
             ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'} 
-            ${isDragActive ? 'border-red-500 bg-red-50' : (imageError ? 'border-red-500' : 'border-gray-300 hover:border-gray-400')}`}
+            ${isDragActive ? 'border-blue-500 bg-blue-50' : (imageError ? 'border-blue-500' : 'border-gray-300 hover:border-gray-400')}`}
         >
           {/* Input gets input props */}
           <input {...getInputProps() as React.InputHTMLAttributes<HTMLInputElement>} />
@@ -135,7 +135,7 @@ const UploadEvaluationContent: React.FC<UploadEvaluationContentProps> = ({
              </p>
           )}
         </div>
-        {imageError && <p className="text-sm text-red-600 mt-1">{imageError}</p>}
+        {imageError && <p className="text-sm text-blue-600 mt-1">{imageError}</p>}
          <p className="text-xs text-gray-500 mt-1">Max image size: {MAX_IMAGE_SIZE_MB}MB.</p>
       </div>
 
@@ -143,7 +143,7 @@ const UploadEvaluationContent: React.FC<UploadEvaluationContentProps> = ({
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center">
             <label htmlFor="caption" className="font-medium">Caption</label>
-            <span className={`text-xs ${currentCaptionLength > MAX_CAPTION_LENGTH ? 'text-red-600' : 'text-gray-500'}`}>
+            <span className={`text-xs ${currentCaptionLength > MAX_CAPTION_LENGTH ? 'text-blue-600' : 'text-gray-500'}`}>
                 {currentCaptionLength}/{MAX_CAPTION_LENGTH}
             </span>
         </div>
@@ -151,7 +151,7 @@ const UploadEvaluationContent: React.FC<UploadEvaluationContentProps> = ({
           id="caption"
           rows={4}
           className={`border rounded-md p-2 focus:outline-none focus:ring-2 w-full disabled:bg-gray-100 
-            ${captionError ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-red-200'}`}
+            ${captionError ? 'border-blue-500 focus:ring-blue-300' : 'border-gray-300 focus:ring-blue-200'}`}
           value={caption}
           onChange={handleCaptionChange}
           placeholder="Enter the post caption..."
@@ -159,13 +159,13 @@ const UploadEvaluationContent: React.FC<UploadEvaluationContentProps> = ({
           aria-invalid={!!captionError}
           aria-describedby={captionError ? "caption-error" : undefined}
         />
-        {captionError && <p id="caption-error" className="text-sm text-red-600 mt-1">{captionError}</p>}
+        {captionError && <p id="caption-error" className="text-sm text-blue-600 mt-1">{captionError}</p>}
       </div>
 
       {/* Submit Button - TODO: Replace with actual reusable Button component if available */}
       <button 
          type="submit" // Important for form submission
-         className="bg-red-500 text-white py-2 px-6 rounded-md hover:bg-red-600 self-start disabled:opacity-50 disabled:cursor-not-allowed"
+         className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 self-start disabled:opacity-50 disabled:cursor-not-allowed"
          disabled={isSubmitDisabled}
       >
          {isDisabled ? 'Submitting...' : 'Submit for Evaluation'}

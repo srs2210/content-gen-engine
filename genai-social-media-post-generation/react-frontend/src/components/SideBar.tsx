@@ -41,7 +41,7 @@ const SideBar = () => {
           {routes.map((route, i) => {
             return (
               <Link to={route.route} key={i}>
-                <div className={`py-2 px-4 min-w-[200px] rounded-md ${pathname === route.route ? "bg-red-200" : "hover:bg-red-50"}`}>
+                <div className={`py-2 px-4 min-w-[200px] rounded-md ${pathname === route.route ? "bg-blue-200" : "hover:bg-blue-50"}`}>
                   {route.displayText}
                 </div>
               </Link>

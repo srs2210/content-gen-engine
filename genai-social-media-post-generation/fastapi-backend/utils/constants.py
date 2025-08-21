@@ -18,7 +18,7 @@ from enum import Enum
 import os
 
 # Gemini Models
-MODEL_GEMINI_PRO = "gemini-2.5-pro"
+MODEL_GEMINI_PRO = "gemini-2.5-flash"
 MODEL_IMAGEN = "imagen-3.0-generate-002"
 
 # Project Settings

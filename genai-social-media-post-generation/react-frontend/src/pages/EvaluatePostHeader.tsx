@@ -79,35 +79,35 @@ import { EvaluationWorkflowStage } from "../types";
            <div
              onClick={() => setWorkflowStage(EvaluationWorkflowStage.UPLOAD_EVALUATION_CONTENT)}
              className={`flex items-center border-2 rounded-full p-4 cursor-pointer ${
-               workflowStage === EvaluationWorkflowStage.UPLOAD_EVALUATION_CONTENT ? "border-red-600" : "border-red-200"
+               workflowStage === EvaluationWorkflowStage.UPLOAD_EVALUATION_CONTENT ? "border-blue-600" : "border-blue-200"
              }`}
            >
              <div
                className={`w-8 h-8 ${
-                 workflowStage === EvaluationWorkflowStage.UPLOAD_EVALUATION_CONTENT ? "bg-red-600" : "bg-red-200"
+                 workflowStage === EvaluationWorkflowStage.UPLOAD_EVALUATION_CONTENT ? "bg-blue-600" : "bg-blue-200"
                } rounded-full flex items-center justify-center`}
              >
                1
              </div>
              <span className="ml-2 text-sm font-medium">Upload Content</span>
            </div>
-           <div className={`h-1 w-8 bg-gray-300 mx-2 ${requestId ? "bg-red-600" : "bg-gray-300"}`}></div>
+           <div className={`h-1 w-8 bg-gray-300 mx-2 ${requestId ? "bg-blue-600" : "bg-gray-300"}`}></div>
            <div
              onClick={handleViewGeneratedPosts}
              className={`flex items-center border-2 rounded-full p-4 cursor-pointer ${
                workflowStage === EvaluationWorkflowStage.VIEW_EVALUATION_RESULTS
-                 ? "border-red-600"
+                 ? "border-blue-600"
                  : requestId
-                 ? "border-red-200"
+                 ? "border-blue-200"
                  : "border-gray-200 cursor-not-allowed"
              }`}
            >
              <div
                className={`w-8 h-8 ${
                  workflowStage === EvaluationWorkflowStage.VIEW_EVALUATION_RESULTS
-                   ? "bg-red-600"
+                   ? "bg-blue-600"
                    : requestId
-                   ? "bg-red-200"
+                   ? "bg-blue-200"
                    : "bg-gray-300"
                } rounded-full flex items-center justify-center`}
              >
@@ -117,7 +117,7 @@ import { EvaluationWorkflowStage } from "../types";
            </div>
          </div>
          {isRequestCompleted && requestId && (
-           <div onClick={handleCreateNewPost} className="bg-red-600 text-white px-4 py-2 rounded-md cursor-pointer h-fit flex items-center gap-1">
+           <div onClick={handleCreateNewPost} className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer h-fit flex items-center gap-1">
              <AddIcon fontSize="small" />
              Evaluate New Post
            </div>

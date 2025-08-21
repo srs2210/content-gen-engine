@@ -88,7 +88,7 @@ const Login: React.FC = () => {
             <input
               type="text"
               id="email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter your User ID"
             />
           </div>
@@ -99,13 +99,13 @@ const Login: React.FC = () => {
             <input
               type="password"
               id="pin"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter your PIN"
             />
           </div>
           <button
             type="submit"
-            className="flex items-center justify-center w-full bg-[#ED1B2E] text-white py-2 px-4 rounded-md hover:bg-red-600 focus:ring-4 focus:ring-red-300"
+            className="flex items-center justify-center w-full bg-[#2563EB] text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:ring-4 focus:ring-blue-300"
             disabled={isLoading}
           >
             {isLoading ? <CircularProgress size={20} style={{ color: 'white' }}/> : 'Login'}
@@ -114,19 +114,19 @@ const Login: React.FC = () => {
       </div>
 
       {/* Right Section - Carousel */}
-      <div className="w-1/3 bg-[#ED1B2E] h-[50vh] rounded-r-2xl text-white flex flex-col items-center shadow-lg justify-center relative">
+      <div className="w-1/3 bg-[#2563EB] h-[50vh] rounded-r-2xl text-white flex flex-col items-center shadow-lg justify-center relative">
         <div className="absolute inset-0 flex items-center justify-center">
           <h2 className="text-xl font-semibold text-center px-4">{slides[currentSlide].text}</h2>
         </div>
         <div className="absolute bottom-6 flex gap-4">
           <button
-            className="p-2 bg-[#D01727] w-10 h-10 rounded-full hover:bg-red-800"
+            className="p-2 bg-[#043FC1] w-10 h-10 rounded-full hover:bg-blue-800"
             onClick={handlePrevSlide}
           >
             &lt;
           </button>
           <button
-            className="p-2 bg-[#D01727] w-10 h-10 rounded-full hover:bg-red-800"
+            className="p-2 bg-[#043FC1] w-10 h-10 rounded-full hover:bg-blue-800"
             onClick={handleNextSlide}
           >
             &gt;
