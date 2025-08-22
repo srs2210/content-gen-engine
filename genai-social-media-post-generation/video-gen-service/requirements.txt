@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+google-cloud-aiplatform
+google-cloud-storage
+google-cloud-firestore
+loguru
+python-dotenv
