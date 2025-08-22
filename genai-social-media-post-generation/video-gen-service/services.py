@@ -1,14 +1,18 @@
 # services.py
+import base64
 import os
 from datetime import datetime
 from typing import Dict, List
 
-import vertexai
+# The top-level 'vertexai' import is no longer needed
+# import vertexai
+from google.cloud import aiplatform
 from google.cloud import firestore, storage
 from loguru import logger
-from models import Job, JobStatus, SocialMediaPlatform
+from models import AspectRatio, Job, JobStatus, Resolution, SocialMediaPlatform
 from utils import POST_TEXT_CAPTION_TEMPLATE, generate_platform_specific_instructions
 from vertexai.preview.generative_models import GenerativeModel
+
 
 # --- GCP Configuration ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
@@ -18,7 +22,9 @@ FIRESTORE_ID = os.environ.get("FIRESTORE_ID")
 VIDEO_MODEL_NAME = os.environ.get("VIDEO_MODEL_NAME", "veo-3.0-generate-001")
 CAPTION_MODEL_NAME = os.environ.get("CAPTION_MODEL_NAME", "gemini-1.5-flash-001")
 
-vertexai.init(project=PROJECT_ID, location=LOCATION)
+# CHANGE 1: The global vertexai.init() line has been removed.
+# vertexai.init(project=PROJECT_ID, location=LOCATION)
+
 storage_client = storage.Client(project=PROJECT_ID)
 db = firestore.Client(project=PROJECT_ID, database=FIRESTORE_ID)
 jobs_collection = db.collection("videoGenerationJobs")
@@ -27,7 +33,11 @@ jobs_collection = db.collection("videoGenerationJobs")
 def generate_captions(prompt: str, platforms: List[SocialMediaPlatform]) -> Dict[str, str]:
     logger.info(f"Generating captions for platforms: {[p.value for p in platforms]}")
     captions = {}
-    model = GenerativeModel(CAPTION_MODEL_NAME)
+    
+    # CHANGE 2: The GenerativeModel client is now initialized with its full, explicit path.
+    full_model_name = f"projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{CAPTION_MODEL_NAME}"
+    model = GenerativeModel(full_model_name)
+
     for platform in platforms:
         try:
             platform_prompt = POST_TEXT_CAPTION_TEMPLATE.format(user_input=prompt, social_media_platform=platform.value.upper())
@@ -39,21 +49,33 @@ def generate_captions(prompt: str, platforms: List[SocialMediaPlatform]) -> Dict
             captions[platform.value] = f"Error generating caption. Original prompt: {prompt}"
     return captions
 
-# CHANGE 1: The 'duration_seconds' parameter is removed from this function's signature.
-def generate_video_from_prompt(prompt: str) -> bytes:
+def generate_video_from_prompt(prompt: str, duration: int, aspect_ratio: AspectRatio, resolution: Resolution, audio: bool) -> bytes:
     """
-    Invokes a Vertex AI text-to-video model and returns the video bytes.
+    Invokes the video model using the predict_long_running endpoint.
     """
-    logger.info(f"Initiating video generation with model '{VIDEO_MODEL_NAME}'")
-    model = GenerativeModel(VIDEO_MODEL_NAME)
+    logger.info(f"Initiating long-running video generation for prompt: '{prompt}'")
     
-    full_prompt = f"{prompt}, cinematic, 8k, professional footage, dynamic motion, 9:16 aspect ratio"
+    # This part is already correct, as it uses the full model path.
+    model = aiplatform.Model(f"projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{VIDEO_MODEL_NAME}")
     
-    response = model.generate_content([full_prompt])
+    instances = [{"prompt": prompt}]
+    parameters = {
+        "durationSeconds": duration,
+        "aspectRatio": aspect_ratio.value,
+        "resolution": resolution.value,
+        "generateAudio": audio,
+        "addWatermark": True
+    }
+
+    logger.info("Submitting prediction job...")
+    operation = model.predict_long_running(instances=instances, parameters=parameters)
     
-    video_bytes = response.candidates[0].content.data
-    logger.success("Successfully generated video from model.")
-    return video_bytes
+    logger.info(f"Waiting for operation {operation.operation.name} to complete...")
+    result = operation.result()
+    
+    logger.success("Prediction job completed.")
+    video_b64 = result.predictions[0]['bytesBase64Encoded']
+    return base64.b64decode(video_b64)
 
 def process_video_generation_job(job_data: dict):
     """The main background task orchestrator."""
@@ -64,8 +86,13 @@ def process_video_generation_job(job_data: dict):
         logger.info(f"Processing job {job.jobId} for user {job.userId}")
         job_ref.update({"status": JobStatus.PROCESSING})
 
-        # CHANGE 2: The call to the function below no longer passes 'job.duration_seconds'.
-        video_bytes = generate_video_from_prompt(job.prompt) 
+        video_bytes = generate_video_from_prompt(
+            prompt=job.prompt,
+            duration=job.durationSeconds,
+            aspect_ratio=job.aspectRatio,
+            resolution=job.resolution,
+            audio=job.generateAudio
+        )
 
         bucket = storage_client.bucket(GCS_OUTPUT_BUCKET)
         blob_name = f"videos/{job.userId}/{job.jobId}.mp4"
@@ -79,7 +106,7 @@ def process_video_generation_job(job_data: dict):
             "status": JobStatus.COMPLETED,
             "endTime": datetime.utcnow(),
             "videoUrl": video_url,
-            "captions": {p.value: c for p, c in zip(job.platforms, captions.values())} # Ensure keys are strings
+            "captions": {p.value: c for p, c in zip(job.platforms, captions.values())}
         })
         logger.success(f"Job {job.jobId} completed.")
 
