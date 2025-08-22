@@ -2,11 +2,22 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-# This Enum can be part of a shared library later
+# --- Enums for API parameters ---
+class AspectRatio(str, Enum):
+    PORTRAIT = "9:16"
+    LANDSCAPE = "16:9"
+    SQUARE = "1:1"
+
+class Resolution(str, Enum):
+    SD = "480p"
+    HD = "720p"
+    FHD = "1080p"
+
+# --- Core Models (unchanged) ---
 class SocialMediaPlatform(str, Enum):
     instagram = 'instagram'
     facebook = 'facebook'
@@ -21,6 +32,7 @@ class JobStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+# --- Updated Request and Job Models ---
 class VideoGenerationRequest(BaseModel):
     """Defines the input for starting a video generation job."""
     prompt: str = Field(..., min_length=10, description="Detailed text prompt for the video.")
@@ -29,7 +41,11 @@ class VideoGenerationRequest(BaseModel):
         default=[SocialMediaPlatform.instagram],
         description="Platforms to generate captions for."
     )
-    # The duration_seconds field has been fully removed.
+    # New parameters to match the working API call
+    durationSeconds: int = Field(default=8, ge=2, le=59, description="Video duration in seconds.")
+    aspectRatio: AspectRatio = Field(default=AspectRatio.PORTRAIT, description="Aspect ratio of the video.")
+    resolution: Resolution = Field(default=Resolution.HD, description="Resolution of the video.")
+    generateAudio: bool = Field(default=True, description="Whether to generate audio for the video.")
 
 class Job(BaseModel):
     """Represents a video generation job stored in Firestore."""
@@ -38,7 +54,11 @@ class Job(BaseModel):
     userId: str
     prompt: str
     platforms: List[SocialMediaPlatform]
-    # The duration_seconds field has been fully removed.
+    # New parameters are now stored in the job
+    durationSeconds: int
+    aspectRatio: AspectRatio
+    resolution: Resolution
+    generateAudio: bool
     requestTime: datetime = Field(default_factory=datetime.utcnow)
     endTime: Optional[datetime] = None
     videoUrl: Optional[str] = None
