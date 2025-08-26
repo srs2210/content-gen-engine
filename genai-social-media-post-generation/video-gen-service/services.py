@@ -3,6 +3,7 @@ import base64
 import os
 from datetime import datetime
 from typing import Dict, List
+import time
 
 # The top-level 'vertexai' import is no longer needed
 # import vertexai
@@ -13,14 +14,23 @@ from models import AspectRatio, Job, JobStatus, Resolution, SocialMediaPlatform
 from utils import POST_TEXT_CAPTION_TEMPLATE, generate_platform_specific_instructions
 from vertexai.preview.generative_models import GenerativeModel
 
+from google import genai
+from google.genai import types
+
 
 # --- GCP Configuration ---
 PROJECT_ID = os.environ.get("PROJECT_ID")
 LOCATION = os.environ.get("LOCATION")
 GCS_OUTPUT_BUCKET = os.environ.get("GCS_OUTPUT_BUCKET")
 FIRESTORE_ID = os.environ.get("FIRESTORE_ID")
-VIDEO_MODEL_NAME = os.environ.get("VIDEO_MODEL_NAME", "veo-3.0-generate-001")
+VIDEO_MODEL_NAME = os.environ.get("VIDEO_MODEL_NAME", "veo-3.0-generate-preview")
 CAPTION_MODEL_NAME = os.environ.get("CAPTION_MODEL_NAME", "gemini-1.5-flash-001")
+
+genaiClient = genai.Client(
+    vertexai=True,
+    project=PROJECT_ID,
+    location="us-central1",
+)
 
 # CHANGE 1: The global vertexai.init() line has been removed.
 # vertexai.init(project=PROJECT_ID, location=LOCATION)
@@ -35,14 +45,15 @@ def generate_captions(prompt: str, platforms: List[SocialMediaPlatform]) -> Dict
     captions = {}
     
     # CHANGE 2: The GenerativeModel client is now initialized with its full, explicit path.
-    full_model_name = f"projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{CAPTION_MODEL_NAME}"
-    model = GenerativeModel(full_model_name)
+    # full_model_name = f"projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{CAPTION_MODEL_NAME}"
+    # model = GenerativeModel(full_model_name)
 
     for platform in platforms:
         try:
             platform_prompt = POST_TEXT_CAPTION_TEMPLATE.format(user_input=prompt, social_media_platform=platform.value.upper())
             full_prompt = f"{platform_prompt}\n**Instructions**:\n{generate_platform_specific_instructions(platform)}"
-            response = model.generate_content(full_prompt)
+            # response = model.generate_content(full_prompt)
+            response = genaiClient.models.generate_content(model="gemini-2.5-flash", contents=full_prompt)
             captions[platform.value] = response.text.strip()
         except Exception as e:
             logger.error(f"Failed caption for {platform.value}: {e}")
@@ -77,6 +88,34 @@ def generate_video_from_prompt(prompt: str, duration: int, aspect_ratio: AspectR
     video_b64 = result.predictions[0]['bytesBase64Encoded']
     return base64.b64decode(video_b64)
 
+def generate_veo_video(
+    prompt: str,
+    duration: int,
+    aspect_ratio: AspectRatio,
+    resolution: Resolution,
+    audio: bool,
+) -> bytes:
+
+    logger.info(f"Initiating long-running video generation for prompt: '{prompt}'")
+
+    operation = genaiClient.models.generate_videos(
+        model="veo-3.0-generate-preview",
+        prompt=prompt,
+    )
+
+    logger.info(f"Waiting for operation {operation.name} to complete...")
+
+    # Poll the operation status until the video is ready.
+    while not operation.done:
+        time.sleep(10)
+        operation = genaiClient.operations.get(operation)
+
+    logger.info(f"Operation {operation.name} completed.")
+
+    # Download the generated video.
+    generated_video = operation.response.generated_videos[0]
+    return generated_video.video.video_bytes
+
 def process_video_generation_job(job_data: dict):
     """The main background task orchestrator."""
     job = Job(**job_data)
@@ -86,7 +125,7 @@ def process_video_generation_job(job_data: dict):
         logger.info(f"Processing job {job.jobId} for user {job.userId}")
         job_ref.update({"status": JobStatus.PROCESSING})
 
-        video_bytes = generate_video_from_prompt(
+        video_bytes = generate_veo_video(
             prompt=job.prompt,
             duration=job.durationSeconds,
             aspect_ratio=job.aspectRatio,
